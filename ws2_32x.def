@@ -1,0 +1,5 @@
+LIBRARY         ws2_32
+EXPORTS
+	_getaddrinfo@16
+	_freeaddrinfo@4
+	_getnameinfo@28
