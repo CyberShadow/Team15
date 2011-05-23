@@ -74,9 +74,7 @@ private:
 			message ~= parameter;
 		}
 
-		debug (IRC) std.stdio.writefln("> %s", message);
-		if (log) log("> " ~ message);
-		conn.send(encoder(message));
+		sendRaw(message);
 	}
 
 	/// Called when a connection has been established.
@@ -116,6 +114,12 @@ private:
 	void onReadLine(LineBufferedSocket sender, string line)
 	{
 		line = decoder(line);
+		if (handleRaw)
+		{
+			handleRaw(this, line);
+			if (line is null)
+				return;
+		}
 		if (log) log("< " ~ line);
 		string nick, username, hostname;
 		debug (IRC) std.stdio.writefln("< %s", line);
@@ -599,6 +603,14 @@ public:
 		conn.disconnect(reason, type);
 	}
 
+	/// Send raw string to server.
+	void sendRaw(string message)
+	{
+		debug (IRC) std.stdio.writefln("> %s", message);
+		if (log) log("> " ~ message);
+		conn.send(encoder(message));
+	}
+
 	/// Join a channel on the network.
 	void join(string channel, string password=null)
 	{
@@ -649,6 +661,9 @@ public:
 	{
 		command("MODE", params);
 	}
+
+	/// Callback for received data before it's processed.
+	void delegate(IrcClient sender, ref string s) handleRaw;
 
 	/// Callback for when we have succesfully logged in.
 	void delegate(IrcClient sender) handleConnect;
