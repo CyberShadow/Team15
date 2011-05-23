@@ -943,7 +943,10 @@ string run(string command)
 	if (!std.file.exists("data"    )) std.file.mkdir("data");
 	if (!std.file.exists("data/tmp")) std.file.mkdir("data/tmp");
 	string tempfn = "data/tmp/run-" ~ .toString(rand()) ~ "-" ~ .toString(counter++) ~ ".txt"; // HACK
-	std.process.system(command ~ " &> " ~ tempfn);
+	version(Windows)
+		std.process.system(command ~ " 2>&1 > " ~ tempfn);
+	else
+		std.process.system(command ~ " &> " ~ tempfn);
 	string result = cast(string)std.file.read(tempfn);
 	std.file.remove(tempfn);
 	return result;
@@ -966,4 +969,21 @@ string run(string[] args)
 	foreach (ref arg; args)
 		escaped ~= escapeShellArg(arg);
 	return run(escaped.join(" "));
+}
+
+// ************************************************************************
+
+static import std.uri;
+
+string shortenURL(string url)
+{
+	if (std.file.exists("data/bitly.txt"))
+		return strip(download(format("http://api.bitly.com/v3/shorten?%s&longUrl=%s&format=txt&domain=j.mp", cast(string)std.file.read("data/bitly.txt"), std.uri.encodeComponent(url))));
+	else
+		return url;
+}
+
+string download(string url, string postprocess = null)
+{
+	return run(`wget -q --no-check-certificate -O - "`~url~`"` ~ postprocess);
 }
