@@ -53,8 +53,8 @@ version(Win32)
 
         pragma (lib, "wsock32.lib");
 
-        private import std.c.windows.windows, std_c_windows_winsock;
-        private alias std_c_windows_winsock.timeval _ctimeval;
+        private import std.c.windows.windows, Team15.std_c_windows_winsock;
+        private alias Team15.std_c_windows_winsock.timeval _ctimeval;
 
         typedef SOCKET socket_t = INVALID_SOCKET;
         private const int _SOCKET_ERROR = SOCKET_ERROR;
