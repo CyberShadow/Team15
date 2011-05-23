@@ -59,7 +59,7 @@ version(linux) import std.c.linux.linux     : FD_SETSIZE;
 version (Win32)
 {
 	pragma(lib, "ws2_32.lib");
-	pragma(lib, "ws2_32x.lib"); // local library for missing IPv6 functions
+	pragma(lib, "Team15\\ws2_32x.lib"); // local library for missing IPv6 functions
 
 	import std.c.windows.windows;
 	alias OVERLAPPED* LPWSAOVERLAPPED;
