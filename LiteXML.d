@@ -158,6 +158,23 @@ class XmlNode
 		}
 	}
 
+	string text()
+	{
+		switch(type)
+		{
+			case XmlNodeType.Text:
+				return convertEntities(tag);
+			case XmlNodeType.Node:
+			case XmlNodeType.Root:
+				string childrenText;
+				foreach(child;children)
+					childrenText ~= child.text();
+				return childrenText;
+			default:
+				return null;
+		}
+	}
+
 	final XmlNode findChild(string tag)
 	{
 		foreach(child;children)
@@ -225,13 +242,13 @@ class XmlDocument : XmlNode
 		tag = "<Root>";
 		skipWhitespace(s);
 		while(s.position < s.size)
-			try
+			//try
 			{
 				children ~= new XmlNode(s);
 				skipWhitespace(s);
 			}
-			catch(Object o)
-				break;
+			//catch(Object o)
+			//	break;
 	}
 }
 
@@ -261,7 +278,7 @@ void skipWhitespace(Stream s)
 
 bool isWord(char c)
 {
-	return c=='-' || c=='_' || isalnum(c);
+	return c=='-' || c=='_' || c==':' || isalnum(c);
 }
 
 string readWord(Stream s)
