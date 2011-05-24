@@ -185,7 +185,10 @@ class XmlNode
 
 	final XmlNode opIndex(string tag)
 	{
-		return findChild(tag);
+		auto node = findChild(tag);
+		if (node is null)
+			throw new Exception("No such child: " ~ tag);
+		return node;
 	}
 
 	final XmlNode opIndex(int index)
