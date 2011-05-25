@@ -937,18 +937,26 @@ else
 
 static import std.process;
 
-string run(string command)
+string run(string command, string input = null)
 {
 	static int counter;
 	if (!std.file.exists("data"    )) std.file.mkdir("data");
 	if (!std.file.exists("data/tmp")) std.file.mkdir("data/tmp");
 	string tempfn = "data/tmp/run-" ~ .toString(rand()) ~ "-" ~ .toString(counter++) ~ ".txt"; // HACK
+	string tempfn2;
+	if (input !is null)
+	{
+		tempfn2 = "data/tmp/run-" ~ .toString(rand()) ~ "-" ~ .toString(counter++) ~ ".txt"; // HACK
+		std.file.write(tempfn2, input);
+		command ~= " < " ~ tempfn2;
+	}
 	version(Windows)
 		std.process.system(command ~ " 2>&1 > " ~ tempfn);
 	else
 		std.process.system(command ~ " &> " ~ tempfn);
 	string result = cast(string)std.file.read(tempfn);
 	std.file.remove(tempfn);
+	if (tempfn2) std.file.remove(tempfn2);
 	return result;
 }
 
@@ -986,4 +994,9 @@ string shortenURL(string url)
 string download(string url, string postprocess = null)
 {
 	return run(`wget -q --no-check-certificate -O - "`~url~`"` ~ postprocess);
+}
+
+string iconv(string data, string inputEncoding, string outputEncoding = "UTF-8")
+{
+	return run(format("iconv -f %s -t %s", inputEncoding, outputEncoding), data);
 }
