@@ -143,7 +143,11 @@ public:
 
 	static string loadTemplate(string filename, string[string] dictionary)
 	{
-		string data = cast(string) read(filename);
+		return parseTemplate(cast(string)read(filename), dictionary);
+	}
+
+	static string parseTemplate(string data, string[string] dictionary)
+	{
 		for(;;)
 		{
 			int startpos = data.find("<?");
@@ -164,7 +168,7 @@ public:
 		string[string] dictionary;
 		dictionary["title"] = title;
 		dictionary["content"] = content;
-		data = new Data(loadTemplate("files/page.htt", dictionary));
+		data = new Data(parseTemplate(pageTemplate, dictionary));
 		headers["Content-Type"] = "text/html";
 	}
 
@@ -177,7 +181,7 @@ public:
 		string[string] dictionary;
 		dictionary["title"] = title;
 		dictionary["content"] = content;
-		writePageContents(title, loadTemplate("files/content.htt", dictionary));
+		writePageContents(title, parseTemplate(contentTemplate, dictionary));
 	}
 
 	static string getStatusExplanation(HttpStatusCode code)
@@ -204,7 +208,7 @@ public:
 		dictionary["message"] = getStatusMessage(code);
 		dictionary["explanation"] = getStatusExplanation(code);
 		dictionary["details"] = details ? "Error details:<br/><strong>" ~ details ~ "</strong>"  : "";
-		string data = loadTemplate("files/error.htt", dictionary);
+		string data = parseTemplate(errorTemplate, dictionary);
 
 		writePageContents(.toString(cast(int)code) ~ " - " ~ getStatusMessage(code), data);
 		return this;
@@ -224,4 +228,51 @@ public:
 		headers["Cache-Control"] = "no-cache, must-revalidate";
 		headers["Pragma"] = "no-cache";
 	}
+
+	static pageTemplate = 
+`<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+  <head>
+    <title><?title?></title>
+    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"/>
+    <style type="text/css">
+      body
+      {
+        padding: 0;
+        margin: 0;
+        border-width: 0;
+        font-family: Tahoma, sans-serif;
+      }
+    </style>
+  </head>
+  <body>
+   <div style="background-color: #FFBFBF; width: 100%; height: 75px;">
+    <div style="position: relative; left: 150px; width: 300px; color: black; font-weight: bold; font-size: 30px;">
+     <span style="color: #FF0000; font-size: 65px;">D</span>HTTP
+    </div>
+   </div>
+   <div style="background-color: #FFC7C7; width: 100%; height: 4px;"></div>
+   <div style="background-color: #FFCFCF; width: 100%; height: 4px;"></div>
+   <div style="background-color: #FFD7D7; width: 100%; height: 4px;"></div>
+   <div style="background-color: #FFDFDF; width: 100%; height: 4px;"></div>
+   <div style="background-color: #FFE7E7; width: 100%; height: 4px;"></div>
+   <div style="background-color: #FFEFEF; width: 100%; height: 4px;"></div>
+   <div style="background-color: #FFF7F7; width: 100%; height: 4px;"></div>
+   <div style="position: relative; top: 40px; left: 10%; width: 80%;">
+<?content?>
+   </div>
+  </body>
+</html>`;
+
+	static contentTemplate =
+`    <p><span style="font-weight: bold; font-size: 40px;"><?title?></span></p>
+<?content?>
+`;
+
+	static errorTemplate = 
+`    <p><span style="font-weight: bold; font-size: 40px;"><span style="color: #FF0000; font-size: 100px;"><?code?></span>(<?message?>)</span></p>
+    <p><?explanation?></p>
+    <p><?details?></p>
+`;
 }
