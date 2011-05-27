@@ -222,6 +222,11 @@ bool endsWith(string str, string end)
 	return str.length >= end.length && str[$-end.length..$]==end;
 }
 
+bool contains(string str, string what)
+{
+	return str.find(what)>=0;
+}
+
 import std.c.string;
 
 bool containsOnly(string s, string chars)
