@@ -90,6 +90,7 @@ private:
 	/// Called when a connection was closed.
 	void onDisconnect(ClientSocket sender, string reason, DisconnectType type)
 	{
+		if (log) log(format("* Disconnected (%s)", reason));
 		nickname = realname = null;
 		password = null;
 		connected = false;
@@ -590,6 +591,7 @@ public:
 		this.nickname = nickname;
 		this.realname = realname;
 		this.password = password;
+		if (log) log(format("* Connecting to %s:%d...", host, port));
 		conn.connect(host, port);
 	}
 
