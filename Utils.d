@@ -993,18 +993,20 @@ string run(string[] args)
 
 static import std.uri;
 
-string shortenURL(string url)
+string[] extraWgetOptions;
+string cookieFile = "data/cookies.txt";
+
+void enableCookies()
 {
-	if (std.file.exists("data/bitly.txt"))
-		return strip(download(format("http://api.bitly.com/v3/shorten?%s&longUrl=%s&format=txt&domain=j.mp", cast(string)std.file.read("data/bitly.txt"), std.uri.encodeComponent(url))));
-	else
-		return url;
+	if (!std.file.exists(cookieFile))
+		std.file.write(cookieFile, "");
+	extraWgetOptions ~= ["--load-cookies", cookieFile, "--save-cookies", cookieFile, "--keep-session-cookies"];
 }
 
 string download(string url)
 {
 	auto dataFile = getTempFileName("wget"); scope(exit) if (std.file.exists(dataFile)) std.file.remove(dataFile);
-	auto result = std.process.spawnvp(std.process.P_WAIT, "wget", ["wget", "-q", "--no-check-certificate", "-O", dataFile, url]);
+	auto result = std.process.spawnvp(std.process.P_WAIT, "wget", ["wget", "-q", "--no-check-certificate", "-O", dataFile] ~ extraWgetOptions ~ [url]);
 	enforce(result==0, "wget error");
 	return cast(string)std.file.read(dataFile);
 }
@@ -1016,9 +1018,17 @@ string post(string url, string data)
 	scope(exit) std.file.remove(postFile);
 
 	auto dataFile = getTempFileName("wget"); scope(exit) if (std.file.exists(dataFile)) std.file.remove(dataFile);
-	auto result = std.process.spawnvp(std.process.P_WAIT, "wget", ["wget", "-q", "--no-check-certificate", "-O", dataFile, "--post-file", postFile, url]);
+	auto result = std.process.spawnvp(std.process.P_WAIT, "wget", ["wget", "-q", "--no-check-certificate", "-O", dataFile, "--post-file", postFile] ~ extraWgetOptions ~ [url]);
 	enforce(result==0, "wget error");
 	return cast(string)std.file.read(dataFile);
+}
+
+string shortenURL(string url)
+{
+	if (std.file.exists("data/bitly.txt"))
+		return strip(download(format("http://api.bitly.com/v3/shorten?%s&longUrl=%s&format=txt&domain=j.mp", cast(string)std.file.read("data/bitly.txt"), std.uri.encodeComponent(url))));
+	else
+		return url;
 }
 
 string iconv(string data, string inputEncoding, string outputEncoding = "UTF-8")
