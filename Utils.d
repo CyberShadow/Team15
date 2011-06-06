@@ -975,13 +975,10 @@ string run(string command, string input = null)
 
 string escapeShellArg(string s)
 {
-	string r;
-	foreach (c; s)
-		if (c=='\'')
-			r ~= `'\''`;
-		else
-			r ~= c;
-	return '\'' ~ r ~ '\'';
+	version(Windows)
+		return `"` ~ s.replace(`\`, `\\`).replace(`"`, `\"`) ~ `"`;
+	else
+		return `'` ~ s.replace(`'`, `'\''`) ~ `'`;
 }
 
 string run(string[] args)
@@ -1006,7 +1003,10 @@ string shortenURL(string url)
 
 string download(string url)
 {
-	return run(["wget", "-q", "--no-check-certificate", "-O", "-", url]);
+	auto dataFile = getTempFileName("wget"); scope(exit) if (std.file.exists(dataFile)) std.file.remove(dataFile);
+	auto result = std.process.spawnvp(std.process.P_WAIT, "wget", ["wget", "-q", "--no-check-certificate", "-O", dataFile, url]);
+	enforce(result==0, "wget error");
+	return cast(string)std.file.read(dataFile);
 }
 
 string post(string url, string data)
@@ -1014,7 +1014,11 @@ string post(string url, string data)
 	auto postFile = getTempFileName("txt");
 	std.file.write(postFile, data);
 	scope(exit) std.file.remove(postFile);
-	return run(["wget", "-q", "--no-check-certificate", "-O", "-", "--post-file", postFile, url]);
+
+	auto dataFile = getTempFileName("wget"); scope(exit) if (std.file.exists(dataFile)) std.file.remove(dataFile);
+	auto result = std.process.spawnvp(std.process.P_WAIT, "wget", ["wget", "-q", "--no-check-certificate", "-O", dataFile, "--post-file", postFile, url]);
+	enforce(result==0, "wget error");
+	return cast(string)std.file.read(dataFile);
 }
 
 string iconv(string data, string inputEncoding, string outputEncoding = "UTF-8")
