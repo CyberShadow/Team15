@@ -940,18 +940,26 @@ else
 
 // ************************************************************************
 
+string getTempFileName(string extension)
+{
+	// TODO: use proper OS directories
+	static int counter;
+	if (!std.file.exists("data"    )) std.file.mkdir("data");
+	if (!std.file.exists("data/tmp")) std.file.mkdir("data/tmp");
+	return "data/tmp/run-" ~ .toString(rand()) ~ "-" ~ .toString(counter++) ~ "." ~ extension;
+}
+
+// ************************************************************************
+
 static import std.process;
 
 string run(string command, string input = null)
 {
-	static int counter;
-	if (!std.file.exists("data"    )) std.file.mkdir("data");
-	if (!std.file.exists("data/tmp")) std.file.mkdir("data/tmp");
-	string tempfn = "data/tmp/run-" ~ .toString(rand()) ~ "-" ~ .toString(counter++) ~ ".txt"; // HACK
+	string tempfn = getTempFileName("txt"); // HACK
 	string tempfn2;
 	if (input !is null)
 	{
-		tempfn2 = "data/tmp/run-" ~ .toString(rand()) ~ "-" ~ .toString(counter++) ~ ".txt"; // HACK
+		tempfn2 = getTempFileName("txt");
 		std.file.write(tempfn2, input);
 		command ~= " < " ~ tempfn2;
 	}
@@ -996,9 +1004,17 @@ string shortenURL(string url)
 		return url;
 }
 
-string download(string url, string postprocess = null)
+string download(string url)
 {
-	return run(`wget -q --no-check-certificate -O - "`~url~`"` ~ postprocess);
+	return run(["wget", "-q", "--no-check-certificate", "-O", "-", url]);
+}
+
+string post(string url, string data)
+{
+	auto postFile = getTempFileName("txt");
+	std.file.write(postFile, data);
+	scope(exit) std.file.remove(postFile);
+	return run(["wget", "-q", "--no-check-certificate", "-O", "-", "--post-file", postFile, url]);
 }
 
 string iconv(string data, string inputEncoding, string outputEncoding = "UTF-8")
