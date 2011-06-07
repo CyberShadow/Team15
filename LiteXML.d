@@ -213,6 +213,14 @@ class XmlNode
 		return node;
 	}
 
+	final XmlNode opIndex(string tag, int index)
+	{
+		auto nodes = findChildren(tag);
+		if (index >= nodes.length)
+			throw new Exception(format("Can't get node with tag %s and index %d, there are only %d children with that tag", tag, index, nodes.length));
+		return nodes[index];
+	}
+
 	final XmlNode opIndex(int index)
 	{
 		return children[index];
