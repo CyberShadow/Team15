@@ -1023,6 +1023,18 @@ string post(string url, string data)
 	return cast(string)std.file.read(dataFile);
 }
 
+string put(string url, string data)
+{
+	auto putFile = getTempFileName("txt");
+	std.file.write(putFile, data);
+	scope(exit) std.file.remove(putFile);
+
+	auto dataFile = getTempFileName("curl"); scope(exit) if (std.file.exists(dataFile)) std.file.remove(dataFile);
+	auto result = std.process.spawnvp(std.process.P_WAIT, "curl", ["curl", "-s", "-k", "-X", "PUT", "-o", dataFile, "-d", "@" ~ putFile, url]);
+	enforce(result==0, "curl error");
+	return cast(string)std.file.read(dataFile);
+}
+
 string shortenURL(string url)
 {
 	if (std.file.exists("data/bitly.txt"))
