@@ -245,13 +245,13 @@ class XmlDocument : XmlNode
 		tag = "<Root>";
 		skipWhitespace(s);
 		while(s.position < s.size)
-			//try
+			try
 			{
 				children ~= new XmlNode(s);
 				skipWhitespace(s);
 			}
-			//catch(Object o)
-			//	break;
+			catch (Object o)
+				throw new Exception(format("Error at %d:\n%s", s.position, o));
 	}
 }
 
