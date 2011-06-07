@@ -190,8 +190,8 @@ class XmlNode
 
 	final XmlNode findChild(string tag)
 	{
-		foreach(child;children)
-			if(child.tag == tag)
+		foreach (child; children)
+			if (child.type == XmlNodeType.Node && child.tag == tag)
 				return child;
 		return null;
 	}
@@ -200,7 +200,7 @@ class XmlNode
 	{
 		XmlNode[] result;
 		foreach (child; children)
-			if (child.tag == tag)
+			if (child.type == XmlNodeType.Node && child.tag == tag)
 				result ~= child;
 		return result;
 	}
