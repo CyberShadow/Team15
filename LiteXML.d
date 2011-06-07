@@ -47,9 +47,11 @@ class XmlNode
 	string[string] attributes;
 	XmlNode[] children;
 	XmlNodeType type;
+	ulong startPos, endPos;
 
 	this(Stream s)
 	{
+		startPos = s.position;
 		char c;
 		do
 			s.read(c);
@@ -148,6 +150,7 @@ class XmlNode
 					expect(s, '>');
 			}
 		}
+		endPos = s.position;
 	}
 
 	string toString()
