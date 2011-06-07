@@ -196,6 +196,15 @@ class XmlNode
 		return null;
 	}
 
+	final XmlNode[] findChildren(string tag)
+	{
+		XmlNode[] result;
+		foreach (child; children)
+			if (child.tag == tag)
+				result ~= child;
+		return result;
+	}
+
 	final XmlNode opIndex(string tag)
 	{
 		auto node = findChild(tag);
