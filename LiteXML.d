@@ -35,8 +35,9 @@ enum XmlNodeType
 {
 	Root,
 	Node,
-	//Comment,
+	Comment,
 	Meta,
+	DocType,
 	Text
 }
 
@@ -49,7 +50,6 @@ class XmlNode
 
 	this(Stream s)
 	{
-	again:
 		char c;
 		do
 			s.read(c);
@@ -70,16 +70,29 @@ class XmlNode
 		else
 		{
 			s.read(c);
-			if(c=='!') // comment
+			if(c=='!')
 			{
-				expect(s, '-');
-				expect(s, '-');
-				char c1, c2, c3;
-				do
+				s.read(c);
+				if (c == '-') // comment
 				{
-					c1 = c2; c2 = c3; s.read(c3);
-				} while (!(c1=='-' && c2=='-' && c3=='>'));
-				goto again;
+					expect(s, '-');
+					type = XmlNodeType.Comment;
+					do
+					{
+						s.read(c);
+						tag ~= c;
+					} while (tag.length<3 || tag[$-3..$] != "-->");
+					tag = tag[0..$-3];
+				}
+				else // doctype, etc.
+				{
+					type = XmlNodeType.DocType;
+					while (c != '>')
+					{
+						tag ~= c;
+						s.read(c);
+					}
+				}
 			}
 			else
 			if(c=='?')
