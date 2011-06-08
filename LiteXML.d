@@ -300,7 +300,7 @@ private:
 			if (c==delim) break;
 			value ~= c;
 		}
-		attributes[name]=value;
+		attributes[name] = decodeEntities(value);
 	}
 }
 
