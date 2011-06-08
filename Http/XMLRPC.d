@@ -24,6 +24,7 @@
 module Team15.Http.XMLRPC;
 
 import std.string;
+import std.conv;
 
 import Team15.LiteXML;
 import Team15.Utils;
@@ -127,6 +128,16 @@ T parseXmlValue(T)(XmlNode value)
 		return contentNode.tag;
 	}
 	else
+	static if (is(T == bool))
+	{
+		enforce(valueType == "boolean", "Expected <boolean>");
+		enforce(typeNode.children.length==1, "Expected one <boolean> child");
+		XmlNode contentNode = typeNode[0];
+		enforce(contentNode.type==XmlNodeType.Text, "Expected <boolean> child to be text node");
+		enforce(contentNode.tag == "true" || contentNode.tag == "false", "Expected <boolean> child to be true or false");
+		return contentNode.tag == "true";
+	}
+	else
 	static if (is(T : long))
 	{
 		enforce(valueType == "integer" || valueType == "int" || valueType == "i4", "Expected <integer> or <int> or <i4>");
@@ -159,6 +170,16 @@ T parseXmlValue(T)(XmlNode value)
 			return toUlong(s);
 		else
 			static assert(0, "Don't know how to parse numerical type " ~ T.stringof);
+	}
+	else
+	static if (is(T == double))
+	{
+		enforce(valueType == "double", "Expected <double>");
+		enforce(typeNode.children.length==1, "Expected one <double> child");
+		XmlNode contentNode = typeNode[0];
+		enforce(contentNode.type==XmlNodeType.Text, "Expected <double> child to be text node");
+		string s = contentNode.tag;
+		return toDouble(s);
 	}
 	else
 	static if (is(T U : U[]))
