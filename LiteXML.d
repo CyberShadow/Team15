@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Light read-only XML library
  *
  * Copyright 2008-2011  Vladimir Panteleev <vladimir@thecybershadow.net>
@@ -31,6 +31,8 @@ import std.ctype;
 alias std.string.iswhite iswhite;
 alias std.string.tolower tolower;
 
+import Team15.Utils;
+
 enum XmlNodeType
 {
 	Root,
@@ -55,24 +57,26 @@ class XmlNode
 		char c;
 		do
 			s.read(c);
-		while(iswhite(c));
+		while (iswhite(c));
 
-		if(c!='<')  // text node
+		if (c!='<')  // text node
 		{
 			type = XmlNodeType.Text;
-			while(c!='<')
+			string text;
+			while (c!='<')
 			{
 				// TODO: check for EOF
-				tag ~= c;
+				text ~= c;
 				s.read(c);
 			}
 			s.seekCur(-1); // rewind to '<'
+			tag = decodeEntities(text);
 			//tag = tag.strip();
 		}
 		else
 		{
 			s.read(c);
-			if(c=='!')
+			if (c=='!')
 			{
 				s.read(c);
 				if (c == '-') // comment
@@ -97,15 +101,15 @@ class XmlNode
 				}
 			}
 			else
-			if(c=='?')
+			if (c=='?')
 			{
 				type = XmlNodeType.Meta;
 				tag=readWord(s);
-				if(tag.length==0) throw new Exception("Invalid tag");
-				while(true)
+				if (tag.length==0) throw new Exception("Invalid tag");
+				while (true)
 				{
 					skipWhitespace(s);
-					if(peek(s)=='?')
+					if (peek(s)=='?')
 						break;
 					readAttribute(s);
 				}
@@ -113,27 +117,27 @@ class XmlNode
 				expect(s, '>');
 			}
 			else
-			if(c=='/')
+			if (c=='/')
 				throw new Exception("Unexpected close tag");
 			else
 			{
 				type = XmlNodeType.Node;
 				tag = c~readWord(s);
-				while(true)
+				while (true)
 				{
 					skipWhitespace(s);
 					c = peek(s);
-					if(c=='>' || c=='/')
+					if (c=='>' || c=='/')
 						break;
 					readAttribute(s);
 				}
 				s.read(c);
-				if(c=='>')
+				if (c=='>')
 				{
-					while(true)
+					while (true)
 					{
 						skipWhitespace(s);
-						if(peek(s)=='<' && peek(s, 2)=='/')
+						if (peek(s)=='<' && peek(s, 2)=='/')
 							break;
 						try
 							children ~= new XmlNode(s);
@@ -142,7 +146,7 @@ class XmlNode
 					}
 					expect(s, '<');
 					expect(s, '/');
-					foreach(tc;tag)
+					foreach (tc;tag)
 						expect(s, tc);
 					expect(s, '>');
 				}
@@ -153,22 +157,56 @@ class XmlNode
 		endPos = s.position;
 	}
 
+	this(XmlNodeType type, string tag = null)
+	{
+		this.type = type;
+		this.tag = tag;
+	}
+
+	XmlNode addAttribute(string name, string value)
+	{
+		attributes[name] = value;
+		return this;
+	}
+
+	XmlNode addChild(XmlNode child)
+	{
+		children ~= child;
+		return this;
+	}
+
 	string toString()
 	{
+		string childrenText()
+		{
+			string result;
+			foreach (child; children)
+				result ~= child.toString();
+			return result;
+		}
+
+		string attrText()
+		{
+			string result;
+			foreach (key, value; attributes)
+				result ~= ' ' ~ key ~ `="` ~ encodeEntities(value) ~ '"';
+			return result;
+		}
+
 		switch(type)
 		{
-			case XmlNodeType.Text:
-				// TODO: compact whitespace
-				return '"' ~ convertEntities(tag) ~ '"';
-			case XmlNodeType.Node:
 			case XmlNodeType.Root:
-				string attrText;
-				foreach(key,value;attributes)
-					attrText ~= ' ' ~ key ~ `="` ~ value ~ '"';
-				string childrenText;
-				foreach(child;children)
-					childrenText ~= child.toString();
-				return '<' ~ tag ~ attrText ~ '>' ~ childrenText ~ "</" ~ tag ~ '>';
+				return childrenText();
+			case XmlNodeType.Node:
+				return '<' ~ tag ~ attrText() ~ '>' ~ childrenText() ~ "</" ~ tag ~ '>';
+			case XmlNodeType.Meta:
+				assert(children.length == 0);
+				return "<?" ~ tag ~ attrText() ~ "?>";
+			case XmlNodeType.DocType:
+				assert(children.length == 0);
+				return "<!" ~ tag ~ attrText() ~ ">";
+			case XmlNodeType.Text:
+				return encodeEntities(tag);
 			default:
 				return null;
 		}
@@ -179,11 +217,11 @@ class XmlNode
 		switch(type)
 		{
 			case XmlNodeType.Text:
-				return convertEntities(tag);
+				return decodeEntities(tag);
 			case XmlNodeType.Node:
 			case XmlNodeType.Root:
 				string childrenText;
-				foreach(child;children)
+				foreach (child;children)
 					childrenText ~= child.text();
 				return childrenText;
 			default:
@@ -246,38 +284,39 @@ private:
 	final void readAttribute(Stream s)
 	{
 		string name = readWord(s);
-		if(name.length==0) throw new Exception("Invalid attribute");
+		if (name.length==0) throw new Exception("Invalid attribute");
 		skipWhitespace(s);
 		expect(s, '=');
 		skipWhitespace(s);
 		char delim;
 		s.read(delim);
-		if(delim != '\'' && delim != '"')
+		if (delim != '\'' && delim != '"')
 			throw new Exception("Expected ' or \'");
 		string value;
-		while(true)
+		while (true)
 		{
 			char c;
 			s.read(c);
-			if(c==delim) break;
+			if (c==delim) break;
 			value ~= c;
 		}
 		attributes[name]=value;
-	}
-
-	this()
-	{
 	}
 }
 
 class XmlDocument : XmlNode
 {
+	this()
+	{
+		super(XmlNodeType.Root);
+		tag = "<Root>";
+	}
+
 	this(Stream s)
 	{
-		type = XmlNodeType.Root;
-		tag = "<Root>";
+		this();
 		skipWhitespace(s);
-		while(s.position < s.size)
+		while (s.position < s.size)
 			try
 			{
 				children ~= new XmlNode(s);
@@ -293,7 +332,7 @@ private:
 char peek(Stream s, int n=1)
 {
 	char c;
-	for(int i=0;i<n;i++)
+	for (int i=0;i<n;i++)
 		s.read(c);
 	s.seekCur(-n);
 	return c;
@@ -304,11 +343,11 @@ void skipWhitespace(Stream s)
 	char c;
 	do
 	{
-		if(s.position==s.size)
+		if (s.position==s.size)
 			return;
 		s.read(c);
 	}
-	while(iswhite(c));
+	while (iswhite(c));
 	s.seekCur(-1);
 }
 
@@ -321,10 +360,10 @@ string readWord(Stream s)
 {
 	char c;
 	string result;
-	while(true)
+	while (true)
 	{
 		s.read(c);
-		if(!isWord(c))
+		if (!isWord(c))
 			break;
 		result ~= c;
 	}
@@ -336,77 +375,101 @@ void expect(Stream s, char c)
 {
 	char c2;
 	s.read(c2);
-	if(c!=c2)
+	if (c!=c2)
 		throw new Exception("Expected " ~ c ~ ", got " ~ c2);
 }
 
-const string[string] entities;
+const dchar[string] entities;
+const string[dchar] entityNames;
 static this()
 {
 	entities =
 	[
-		"quot"[]: \&quot;[],
-		"amp"   : \&amp;   ,
-		"lt"    : \&lt;    ,
-		"gt"    : \&gt;    ,
-		"circ"  : \&circ;  ,
-		"tilde" : \&tilde; ,
-		"nbsp"  : \&nbsp;  ,
-		"ensp"  : \&ensp;  ,
-		"emsp"  : \&emsp;  ,
-		"thinsp": \&thinsp;,
-		"ndash" : \&ndash; ,
-		"mdash" : \&mdash; ,
-		"lsquo" : \&lsquo; ,
-		"rsquo" : \&rsquo; ,
-		"sbquo" : \&sbquo; ,
-		"ldquo" : \&ldquo; ,
-		"rdquo" : \&rdquo; ,
-		"bdquo" : \&bdquo; ,
-		"dagger": \&dagger;,
-		"Dagger": \&Dagger;,
-		"permil": \&permil;,
-		"lsaquo": \&lsaquo;,
-		"rsaquo": \&rsaquo;,
-		"euro"  : \&euro;
+		"quot"[]: '\&quot;'  ,
+		"amp"   : '\&amp;'   ,
+		"lt"    : '\&lt;'    ,
+		"gt"    : '\&gt;'    ,
+		"circ"  : '\&circ;'  ,
+		"tilde" : '\&tilde;' ,
+		"nbsp"  : '\&nbsp;'  ,
+		"ensp"  : '\&ensp;'  ,
+		"emsp"  : '\&emsp;'  ,
+		"thinsp": '\&thinsp;',
+		"ndash" : '\&ndash;' ,
+		"mdash" : '\&mdash;' ,
+		"lsquo" : '\&lsquo;' ,
+		"rsquo" : '\&rsquo;' ,
+		"sbquo" : '\&sbquo;' ,
+		"ldquo" : '\&ldquo;' ,
+		"rdquo" : '\&rdquo;' ,
+		"bdquo" : '\&bdquo;' ,
+		"dagger": '\&dagger;',
+		"Dagger": '\&Dagger;',
+		"permil": '\&permil;',
+		"lsaquo": '\&lsaquo;',
+		"rsaquo": '\&rsaquo;',
+		"euro"  : '\&euro;'  ,
+		"copy"  : '\&copy;'  ,
+		"apos"  : '\''
 	];
+	foreach (name, c; entities)
+		entityNames[c] = name;
 }
 
 import std.utf;
 import std.c.stdio;
 
-public string convertEntities(string source)
+public string encodeEntities(string str)
 {
-	mainLoop:
-	dstring str = toUTF32(source);
-	for(int i=0;i<str.length;i++)
+	foreach_reverse (i, dchar c; str)
 	{
-		if(str[i]=='&')
-			for(int j=i+1;j<str.length;j++)
-				if(str[j]==';')
-				{
-					string entity = toUTF8(str[i+1..j]);
-					if(entity.length>0)
-						if(entity[0]=='#')
-							if(entity.length>1 && entity[1]=='x')
-							{
-								dchar c;
-								sscanf(toStringz(entity[2..$]), "%x", &c);
-								if(c)
-									str = str[0..i] ~ c ~ str[j+1..$];
-							}
-							else
-							{
-								dchar c;
-								sscanf(toStringz(entity[1..$]), "%d", &c);
-								if(c)
-									str = str[0..i] ~ c ~ str[j+1..$];
-							}
-						else
-							if(entity in entities)
-								str = str[0..i] ~ toUTF32(entities[entity]) ~ str[j+1..$];
-					break;
-				}
+		auto name = c in entityNames;
+		if (name)
+			str = str[0..i] ~ '&' ~ *name ~ ';' ~ str[i+stride(str,i)..$];
 	}
-	return toUTF8(str);
+	return str;
+}
+
+public string decodeEntities(string str)
+{
+	int i=0, p;
+	while ((p=str[i..$].find('&'))>=0)
+	{
+		i += p;
+		if ((p=str[i..$].find(';'))>=0)
+		{
+			int j = i+p;
+			string entity = str[i+1..j];
+			if (entity.length>0)
+				if (entity[0]=='#')
+					if (entity.length>1 && entity[1]=='x')
+					{
+						dchar c;
+						enforce(sscanf(toStringz(entity[2..$]), "%x", &c)==1, "Invalid entity hex code");
+						str = str[0..i] ~ toUTF8([c]) ~ str[j+1..$];
+					}
+					else
+					{
+						dchar c;
+						enforce(sscanf(toStringz(entity[1..$]), "%d", &c)==1, "Invalid entity code");
+						str = str[0..i] ~ toUTF8([c]) ~ str[j+1..$];
+					}
+				else
+				{
+					auto c = entity in entities;
+					if (c)
+						str = str[0..i] ~ toUTF8([*c]) ~ str[j+1..$];
+				}
+		}
+		i++;
+	}
+	return str;
+}
+
+deprecated alias decodeEntities convertEntities;
+
+unittest
+{
+	assert(encodeEntities("©,€") == "&copy;,&euro;");
+	assert(decodeEntities("&copy;,&euro;") == "©,€");
 }
