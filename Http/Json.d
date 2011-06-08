@@ -56,7 +56,7 @@ string jsonEscape(string str)
 
 string toJson(T)(T v)
 {
-	static if (is(T==string))
+	static if (is(T : string))
 		return "\"" ~ jsonEscape(v) ~ "\"";
 	else
 	static if (is(T : long))
