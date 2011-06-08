@@ -217,7 +217,7 @@ class XmlNode
 		switch(type)
 		{
 			case XmlNodeType.Text:
-				return decodeEntities(tag);
+				return tag;
 			case XmlNodeType.Node:
 			case XmlNodeType.Root:
 				string childrenText;
