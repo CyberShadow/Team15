@@ -421,6 +421,14 @@ import std.c.stdio;
 
 public string encodeEntities(string str)
 {
+	foreach_reverse (i, c; str)
+		if (c=='<' || c=='>' || c=='"' || c=='\'')
+			str = str[0..i] ~ '&' ~ entityNames[c] ~ ';' ~ str[i+1..$];
+	return str;
+}
+
+public string encodeAllEntities(string str)
+{
 	foreach_reverse (i, dchar c; str)
 	{
 		auto name = c in entityNames;
