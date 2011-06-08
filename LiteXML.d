@@ -422,7 +422,7 @@ import std.c.stdio;
 public string encodeEntities(string str)
 {
 	foreach_reverse (i, c; str)
-		if (c=='<' || c=='>' || c=='"' || c=='\'')
+		if (c=='<' || c=='>' || c=='"' || c=='\'' || c=='&')
 			str = str[0..i] ~ '&' ~ entityNames[c] ~ ';' ~ str[i+1..$];
 	return str;
 }
