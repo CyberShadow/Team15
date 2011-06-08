@@ -266,6 +266,24 @@ string repeatReplace(string s, string from, string to)
 	return s;
 }
 
+T[] padRight(T)(T[] s, size_t l, T c)
+{
+	auto ol = s.length;
+	if (ol < l)
+	{
+		s.length = l;
+		s[ol..$] = c;
+	}
+	return s;
+}
+
+T[] repeatOne(T)(T c, size_t l)
+{
+	T[] result = new T[l];
+	result[] = c;
+	return result;
+}
+
 T* unmanagedDup(T)(T[] arr)
 {
 	T* p = cast(T*)std.c.stdlib.malloc(arr.length);
@@ -375,6 +393,16 @@ uint fromHex(string s)
 	return n;
 }
 
+ubyte[] arrayFromHex(string s)
+{
+	assert(s.length % 2 == 0);
+	ubyte[] result;
+	while (s.length)
+		result ~= fromHex(s[0..2]),
+		s = s[2..$];
+	return result;
+}
+
 uint[256] crc32_table = [
 	0x00000000,0x77073096,0xee0e612c,0x990951ba,0x076dc419,0x706af48f,0xe963a535,0x9e6495a3,0x0edb8832,0x79dcb8a4,0xe0d5e91e,0x97d2d988,0x09b64c2b,0x7eb17cbd,0xe7b82d07,0x90bf1d91,
 	0x1db71064,0x6ab020f2,0xf3b97148,0x84be41de,0x1adad47d,0x6ddde4eb,0xf4d4b551,0x83d385c7,0x136c9856,0x646ba8c0,0xfd62f97a,0x8a65c9ec,0x14015c4f,0x63066cd9,0xfa0f3d63,0x8d080df5,
@@ -442,6 +470,31 @@ uint murmurHash2(void[] data, uint seed=0)
 	h ^= h >> 15;
 
 	return h;
+}
+
+ubyte[] hmac_sha1(string message, ubyte[] privateKey)
+{
+	return
+		arrayFromHex(sha1sum(vector!("^")(padRight(privateKey, 64, cast(ubyte)0x00), repeatOne(cast(ubyte)0x5c, 64)) ~
+		arrayFromHex(sha1sum(vector!("^")(padRight(privateKey, 64, cast(ubyte)0x00), repeatOne(cast(ubyte)0x36, 64)) ~
+		cast(ubyte[])message))));
+}
+
+T[] vector(string op, T)(T[] a, T[] b)
+{
+	assert(a.length == b.length);
+	T[] result = new T[a.length];
+	foreach (i, ref r; result)
+		r = mixin("a[i]" ~ op ~ "b[i]");
+	return result;
+}
+
+T[] vectorAssign(string op, T)(T[] a, T[] b)
+{
+	assert(a.length == b.length);
+	foreach (i, ref r; a)
+		mixin("r " ~ op ~ "= b[i];");
+	return a;
 }
 
 // ************************************************************************
@@ -1046,4 +1099,13 @@ string shortenURL(string url)
 string iconv(string data, string inputEncoding, string outputEncoding = "UTF-8")
 {
 	return run(format("iconv -f %s -t %s", inputEncoding, outputEncoding), data);
+}
+
+string sha1sum(void[] data)
+{
+	auto dataFile = getTempFileName("sha1data");
+	std.file.write(dataFile, data);
+	scope(exit) std.file.remove(dataFile);
+
+	return run(["sha1sum", "-b", dataFile])[0..40];
 }
