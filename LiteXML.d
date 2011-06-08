@@ -146,7 +146,7 @@ class XmlNode
 					}
 					expect(s, '<');
 					expect(s, '/');
-					foreach (tc;tag)
+					foreach (tc; tag)
 						expect(s, tc);
 					expect(s, '>');
 				}
@@ -221,7 +221,7 @@ class XmlNode
 			case XmlNodeType.Node:
 			case XmlNodeType.Root:
 				string childrenText;
-				foreach (child;children)
+				foreach (child; children)
 					childrenText ~= child.text();
 				return childrenText;
 			default:
@@ -332,7 +332,7 @@ private:
 char peek(Stream s, int n=1)
 {
 	char c;
-	for (int i=0;i<n;i++)
+	for (int i=0; i<n; i++)
 		s.read(c);
 	s.seekCur(-n);
 	return c;
