@@ -134,8 +134,8 @@ T parseXmlValue(T)(XmlNode value)
 		enforce(typeNode.children.length==1, "Expected one <boolean> child");
 		XmlNode contentNode = typeNode[0];
 		enforce(contentNode.type==XmlNodeType.Text, "Expected <boolean> child to be text node");
-		enforce(contentNode.tag == "true" || contentNode.tag == "false", "Expected <boolean> child to be true or false");
-		return contentNode.tag == "true";
+		enforce(contentNode.tag == "0" || contentNode.tag == "1", "Expected <boolean> child to be 0 or 1");
+		return contentNode.tag == "1";
 	}
 	else
 	static if (is(T : long))
