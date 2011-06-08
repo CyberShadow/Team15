@@ -964,7 +964,7 @@ string run(string command, string input = null)
 		command ~= " < " ~ tempfn2;
 	}
 	version(Windows)
-		std.process.system(command ~ " 2>&1 > " ~ tempfn);
+		std.process.system(`"` ~ command ~ `" 2>&1 > ` ~ tempfn);
 	else
 		std.process.system(command ~ " &> " ~ tempfn);
 	string result = cast(string)std.file.read(tempfn);
