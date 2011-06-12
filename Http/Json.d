@@ -25,15 +25,33 @@ module Team15.Http.Json;
 
 import std.string;
 
-string jsonEscape(string str)
+string jsonEscape(bool UNICODE = true)(string str)
 {
+	static if (UNICODE)
+	{
+		bool hasUnicode;
+		foreach (char c; str)
+			if (c >= 0x80)
+			{
+				hasUnicode = true;
+				break;
+			}
+		if (!hasUnicode)
+			return jsonEscape!(false)(str);
+	}
+
+	static if (UNICODE)
+		alias dchar CHAR_TYPE;
+	else
+		alias char CHAR_TYPE;
+
 	string result;
-	foreach(c;str)
-		if (c=='\\' || c=='"')
-			result ~= "\\" ~ [c];
+	foreach (CHAR_TYPE c ;str)
+		if (c=='\\')
+			result ~= `\\`;
 		else
-		if (c<'\x20')
-			result ~= format(`\u%04x`, c);
+		if (c=='\"')
+			result ~= `\"`;
 		else
 		if (c=='\b')
 			result ~= `\b`;
@@ -50,7 +68,10 @@ string jsonEscape(string str)
 		if (c=='\t')
 			result ~= `\t`;
 		else
-			result ~= [c];
+		if (c<'\x20' || c >= '\x7F')
+			result ~= format(`\u%04x`, c);
+		else
+			result ~= [cast(char)c];
 	return result;
 }
 
