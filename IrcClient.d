@@ -30,7 +30,6 @@ import std.conv;
 import std.date:TicksPerSecond, getUTCtime;
 import std.random;
 import std.string;
-import std.utf;
 
 public import Team15.Utils;
 public import Team15.Irc;
@@ -299,17 +298,17 @@ private:
 
 			string target = canonicalName(params[0]);
 			IrcMessageType type = IrcMessageType.NORMAL;
-			dstring text = toUTF32(params[1]);
-			if (text.length > 9 && text[0..7] == "\x01ACTION"d)
+			string text = params[1];
+			if (text.startsWith("\x01ACTION"))
 			{
 				type = IrcMessageType.ACTION;
 				text = text[7 .. $];
-				if(text.length>0 && text[0]==' ')
+				if (text.startsWith(" "))
 					text = text[1..$];
-				if(text.length>0 && text[$-1]=='\x01')
+				if (text.endsWith("\x01"))
 					text = text[0..$-1];
 			}
-			onMessage(nick, target, toUTF8(text), type);
+			onMessage(nick, target, text, type);
 			break;
 
 		case "NOTICE":
