@@ -867,12 +867,24 @@ private:
 version(Windows)
 {
 	import std.c.windows.windows : SetConsoleCP, SetConsoleOutputCP;
+	UINT oldCP, oldOutputCP;
+
 	static this()
 	{
+		oldCP = GetConsoleCP();
+		oldOutputCP = GetConsoleOutputCP();
+
 		SetConsoleCP(65001);
 		SetConsoleOutputCP(65001);
 	}
+
+	static ~this()
+	{
+		SetConsoleCP(oldCP);
+		SetConsoleOutputCP(oldOutputCP);
+	}
 }
+
 
 // ************************************************************************
 
