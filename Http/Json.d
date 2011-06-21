@@ -261,7 +261,10 @@ private struct JsonParser
 		expect('[');
 		skipWhitespace();
 		if (peek==']')
+		{
+			p++;
 			return [];
+		}
 		T[] result;
 		while(true)
 		{
