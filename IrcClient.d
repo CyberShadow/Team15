@@ -473,7 +473,6 @@ protected: // overridable methods
 
 	void onLeave(string nick)
 	{
-		assert(nick != nickname);
 		users.remove(nick);
 		canonicalUserNames.remove(rfc1459toLower(nick));
 		if (handleLeave)
