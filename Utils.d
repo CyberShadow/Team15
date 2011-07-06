@@ -589,8 +589,10 @@ version(Windows)
 	import std.c.windows.windows : FILETIME, BOOL, HANDLE;
 	import std.windows.charset : toMBSz;
 	extern(Windows) BOOL SetFileTime(HANDLE, FILETIME *,FILETIME *,FILETIME *);
+	extern(Windows) BOOL GetFileTime(HANDLE, FILETIME *,FILETIME *,FILETIME *);
 
 	enum : ulong { ticksFrom1601To1970 = 11_644_473_600UL * TicksPerSecond }
+	enum { FILE_ATTRIBUTE_REPARSE_POINT = 0x400 }
 
 	FILETIME d_time2FILETIME(d_time dt)
 	{
@@ -653,11 +655,12 @@ d_time getMTime(string name)
 {
 	version(Windows)
 	{
-		WIN32_FIND_DATAW wfd;
-		auto h = FindFirstFileW(std.utf.toUTF16z(name), &wfd);
-		enforce(h!=INVALID_HANDLE_VALUE, "FindFirstFile");
-		FindClose(h);
-		return FILETIME2d_time(&wfd.ftLastWriteTime);
+		auto h = CreateFileW(std.utf.toUTF16z(name), GENERIC_READ, 0, null, OPEN_EXISTING, 0, HANDLE.init);
+		enforce(h!=INVALID_HANDLE_VALUE, "CreateFile");
+		FILETIME ft;
+		enforce(GetFileTime(h, null, null, &ft)!=0, "GetFileTime");
+		CloseHandle(h);
+		return FILETIME2d_time(&ft);
 	}
 	else
 	{
