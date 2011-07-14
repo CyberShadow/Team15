@@ -113,7 +113,8 @@ class RawFileLogger : Logger
 			close();
 			return this;
 		}
-		fprintf(f, "%.*s\n", str.length, str.ptr);
+		fwrite(str.ptr, 1, str.length, f);
+		fprintf(f, "\n");
 		fflush(f);
 		return this;
 	}
@@ -207,7 +208,8 @@ class ConsoleLogger : Logger
 
 	override Logger log(string str)
 	{
-		fprintf(stdout, "%.*s: %.*s\n", name.length, name.ptr, str.length, str.ptr);
+		string output = name ~ ": " ~ str ~ "\n";
+		fwrite(output.ptr, 1, output.length, stdout);
 		fflush(stdout);
 		return this;
 	}
