@@ -93,6 +93,11 @@ CommonType!(T) max(T...)(T arg)
 		return max(max(arg[0..$/2]), max(arg[$/2..$]));
 }
 
+int compare(T)(T a, T b)
+{
+	return a<b ? -1 : a>b ? 1 : 0;
+}
+
 T abs(T)(T x) { return x<0?-x:x; }
 T sqr(T)(T x) { return x*x; }
 
