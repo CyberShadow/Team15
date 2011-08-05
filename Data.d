@@ -102,7 +102,8 @@ public:
 	void deleteContents()
 	{
 		delete wrapper;
-		clear();
+		assert(wrapper is null);
+		start = end = 0;
 	}
 
 	void clear()
