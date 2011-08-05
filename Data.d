@@ -270,18 +270,20 @@ public:
 
 import std.stream;
 
+Data readStreamData(Stream s)
+{
+	auto data = new Data(s.size - s.position);
+	s.readExact(data.ptr, data.length);
+	return data;
+}
+
 Data readData(string filename)
 {
-	/*auto contents = std.file.read(filename);
-	auto data = new Data(contents);
-	delete contents;*/
-
 	auto size = std.file.getSize(filename);
-	assert(size < uint.max);
-	auto data = new Data(cast(uint)size);
+	assert(size < size_t.max);
 	scope file = new File(filename);
-	file.readExact(data.ptr, data.length);
-	return data;
+	scope(exit) file.close();
+	return readStreamData(file);
 }
 
 // ************************************************************************
