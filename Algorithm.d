@@ -51,6 +51,14 @@ struct BulkAllocator(T, uint BLOCKSIZE, alias ALLOCATOR = HeapAllocator)
 		index = 0;
 	}
 
+	static if (is(typeof(&allocator.freeAll)))
+	{
+		void freeAll()
+		{
+			allocator.freeAll();
+		}
+	}
+	else
 	static if (is(typeof(&allocator.free)))
 	{
 		void freeAll()
@@ -71,6 +79,26 @@ struct HeapAllocator(T)
 	void free(T* v)
 	{
 		delete v;
+	}
+}
+
+struct DataAllocator(T)
+{
+	import Team15.Data;
+
+	Data[] datas;
+
+	T* allocate()
+	{
+		auto data = new Data(T.sizeof);
+		datas ~= data;
+		return cast(T*)data.ptr;
+	}
+
+	void freeAll()
+	{
+		foreach (data; datas)
+			data.deleteContents();
 	}
 }
 
