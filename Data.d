@@ -273,15 +273,15 @@ import std.stream;
 
 Data readStreamData(Stream s)
 {
-	auto data = new Data(s.size - s.position);
+	auto size = s.size - s.position;
+	assert(size < size_t.max);
+	auto data = new Data(cast(size_t)size);
 	s.readExact(data.ptr, data.length);
 	return data;
 }
 
 Data readData(string filename)
 {
-	auto size = std.file.getSize(filename);
-	assert(size < size_t.max);
 	scope file = new File(filename);
 	scope(exit) file.close();
 	return readStreamData(file);
