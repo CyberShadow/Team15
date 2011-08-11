@@ -141,12 +141,9 @@ private:
 			string respMessage = "HTTP/1.0 ";
 			if (response)
 			{
-				if (!response.leaveOpen)
-				{
-					if ("Accept-Encoding" in currentRequest.headers)
-						response.compress(currentRequest.headers["Accept-Encoding"]);
-					response.headers["Content-Length"] = (response && response.data) ? .toString(response.data.length) : "0";
-				}
+				if ("Accept-Encoding" in currentRequest.headers)
+					response.compress(currentRequest.headers["Accept-Encoding"]);
+				response.headers["Content-Length"] = (response && response.data) ? .toString(response.data.length) : "0";
 				response.headers["X-Powered-By"] = "DHttp";
 
 				respMessage ~= .toString(response.status) ~ " " ~ response.statusMessage ~ "\r\n";
@@ -165,9 +162,6 @@ private:
 				data ~= response.data;
 
 			conn.send(data.contents);
-
-			if (response && response.leaveOpen)
-				expect = 0;
 		}
 
 		void disconnect()

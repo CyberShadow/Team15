@@ -208,7 +208,6 @@ class HttpResponse : HttpMessage
 public:
 	ushort status;
 	string statusMessage;
-	bool leaveOpen;
 
 	this()
 	{
