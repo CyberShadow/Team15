@@ -125,7 +125,10 @@ private:
 			currentRequest.data = data;
 			if (handleRequest)
 				sendResponse(handleRequest(currentRequest, conn));
-			conn.disconnect();
+
+			// reset for next request
+			conn.handleReadData = &onNewRequest;
+			inBuffer = new Data;
 		}
 
 		void onContinuation(ClientSocket sender, void[] data)
@@ -138,7 +141,7 @@ private:
 
 		void sendResponse(HttpResponse response)
 		{
-			string respMessage = "HTTP/1.0 ";
+			string respMessage = "HTTP/1.1 ";
 			if (response)
 			{
 				if ("Accept-Encoding" in currentRequest.headers)
@@ -162,11 +165,6 @@ private:
 				data ~= response.data;
 
 			conn.send(data.contents);
-		}
-
-		void disconnect()
-		{
-			conn.disconnect();
 		}
 	}
 
