@@ -35,6 +35,7 @@ import Team15.Data;
 private abstract class HttpMessage
 {
 public:
+	string protocolVersion = "1.0";
 	string[string] headers;
 	Data data;
 }

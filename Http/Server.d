@@ -34,7 +34,7 @@ import std.uri;
 import Team15.ASockets;
 import Team15.Data;
 
-debug (REFCOUNT) import Team15.Utils;
+import Team15.Utils;
 
 public import Team15.Http.Common;
 
@@ -54,6 +54,7 @@ private:
 
 		HttpRequest currentRequest;
 		int expect;  // VP 2007.01.21: changing from size_t to int because size_t is unsigned
+		bool persistent;
 
 		this(ClientSocket conn)
 		{
@@ -84,22 +85,23 @@ private:
 			debug (HTTP) writefln("Got headers, %d bytes total", headersend+4);
 			string[] lines = splitlines(inBufferStr[0 .. headersend]);
 			string reqline = lines[0];
+			enforce(reqline.length > 10);
 			lines = lines[1 .. lines.length];
 
 			currentRequest = new HttpRequest();
 
 			int methodend = find(reqline, ' ');
-			if (methodend == -1)
-				return;
+			enforce(methodend > 0);
 			currentRequest.method = reqline[0 .. methodend].dup;
 			reqline = reqline[methodend + 1 .. reqline.length];
 
-			int resourceend = find(reqline, ' ');
-			if (resourceend == -1)
-				return;
+			int resourceend = rfind(reqline, ' ');
+			enforce(resourceend > 0);
 			currentRequest.resource = reqline[0 .. resourceend].dup;
 
-			//string httpversion = reqline[resourceend + 1 .. reqline.length];
+			string protocol = reqline[resourceend+1..$];
+			enforce(protocol.startsWith("HTTP/"));
+			currentRequest.protocolVersion = protocol[5..$].dup;
 
 			foreach (string line; lines)
 			{
@@ -107,6 +109,17 @@ private:
 				if (valuestart > 0)
 					currentRequest.headers[line[0 .. valuestart].dup] = line[valuestart + 2 .. line.length].dup;
 			}
+
+			switch (currentRequest.protocolVersion)
+			{
+				case "1.0":
+					persistent =  ("Connection" in currentRequest.headers && currentRequest.headers["Connection"] == "Keep-Alive");
+					break;
+				default: // 1.1+
+					persistent = !("Connection" in currentRequest.headers && currentRequest.headers["Connection"] == "close");
+					break;
+			}
+			debug (HTTP) writefln("This %s connection %s persistent", currentRequest.protocolVersion, persistent ? "IS" : "is NOT");
 
 			expect = 0;
 			if ("Content-Length" in currentRequest.headers)
@@ -149,21 +162,28 @@ private:
 			if (handleRequest)
 				sendResponse(handleRequest(currentRequest, conn));
 
-			// reset for next request
-			conn.handleReadData = &onNewRequest;
-			if (inBuffer.length) // a second request has been pipelined
-				onNewRequest(conn, null);
+			if (persistent)
+			{
+				// reset for next request
+				conn.handleReadData = &onNewRequest;
+				if (inBuffer.length) // a second request has been pipelined
+					onNewRequest(conn, null);
+			}
+			else
+				conn.disconnect();
 		}
 
 		void sendResponse(HttpResponse response)
 		{
-			string respMessage = "HTTP/1.1 ";
+			string respMessage = "HTTP/" ~ currentRequest.protocolVersion ~ " ";
 			if (response)
 			{
 				if ("Accept-Encoding" in currentRequest.headers)
 					response.compress(currentRequest.headers["Accept-Encoding"]);
 				response.headers["Content-Length"] = (response && response.data) ? .toString(response.data.length) : "0";
 				response.headers["X-Powered-By"] = "DHttp";
+				if (persistent && currentRequest.protocolVersion=="1.0")
+					response.headers["Connection"] = "Keep-Alive";
 
 				respMessage ~= .toString(response.status) ~ " " ~ response.statusMessage ~ "\r\n";
 				foreach (string header, string value; response.headers)
