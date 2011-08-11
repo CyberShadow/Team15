@@ -398,6 +398,12 @@ public:
 		else
 			assert(0, "Not supported");
 	}
+
+	final void setNagle(bool enabled=false)
+	{
+		assert(conn);
+		conn.setOption(SocketOptionLevel.TCP, SocketOption.TCP_NODELAY, enabled);
+	}
 }
 
 
@@ -475,7 +481,8 @@ protected:
 			connected = true;
 			//debug writefln("[%s] Connected", remoteAddress);
 			try
-				setKeepAlive();
+				setKeepAlive(),
+				setNagle();
 			catch(Exception e)
 				return disconnect(e.msg, DisconnectType.Error);
 			if (idleTask !is null)
@@ -766,6 +773,7 @@ private:
 			{
 				T connection = new T(acceptSocket);
 				connection.setKeepAlive();
+				connection.setNagle();
 				//assert(connection.connected);
 				//connection.connected = true;
 				handleAccept(connection);
