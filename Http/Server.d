@@ -38,6 +38,8 @@ debug (REFCOUNT) import Team15.Utils;
 
 public import Team15.Http.Common;
 
+debug (HTTP) import std.stdio;
+
 class HttpServer
 {
 private:
@@ -60,6 +62,7 @@ private:
 			this.conn = conn;
 			conn.handleReadData = &onNewRequest;
 			conn.setIdleTimeout(timeout);
+			debug (HTTP) conn.handleDisconnect = &onDisconnect;
 			inBuffer = new Data;
 		}
 
@@ -70,6 +73,7 @@ private:
 
 		void onNewRequest(ClientSocket sender, void[] data)
 		{
+			debug (HTTP) writefln("Receiving start of request: \n%s---", cast(string)data);
 			inBuffer ~= data;
 
 			auto inBufferStr = cast(string)inBuffer.contents;
@@ -120,12 +124,22 @@ private:
 				processRequest(null);
 		}
 
+		debug (HTTP)
+		void onDisconnect(ClientSocket sender, string reason, DisconnectType type)
+		{
+			writefln("Disconnect: %s", reason);
+		}
+
 		void onContinuation(ClientSocket sender, void[] data)
 		{
+			debug (HTTP) writefln("Receiving continuation of request: \n%s---", cast(string)data);
 			inBuffer ~= data;
 
 			if (inBuffer.length >= expect)
+			{
+				debug (HTTP) writefln(inBuffer.length, "/", expect);
 				processRequest(inBuffer.popFront(expect));
+			}
 		}
 
 		void processRequest(Data data)
@@ -166,6 +180,7 @@ private:
 				data ~= response.data;
 
 			conn.send(data.contents);
+			debug (HTTP) writefln("Sent response (%d bytes)", data.length);
 		}
 	}
 
@@ -178,6 +193,7 @@ private:
 
 	void onAccept(ClientSocket incoming)
 	{
+		debug (HTTP) writefln("New connection from " ~ incoming.remoteAddress);
 		new Connection(incoming);
 	}
 
