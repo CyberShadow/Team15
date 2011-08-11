@@ -435,6 +435,9 @@ string decodeUrlParameter(string encoded)
 			i += 2;
 		}
 		else
+		if (encoded[i] == '+')
+			s ~= ' ';
+		else
 			s ~= encoded[i];
 	return s;
 }
