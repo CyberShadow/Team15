@@ -81,6 +81,7 @@ private:
 			if (headersend == -1)
 				return;
 
+			debug (HTTP) writefln("Got headers, %d bytes total", headersend+4);
 			string[] lines = splitlines(inBufferStr[0 .. headersend]);
 			string reqline = lines[0];
 			lines = lines[1 .. lines.length];

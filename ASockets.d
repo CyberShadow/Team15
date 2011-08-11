@@ -458,6 +458,7 @@ protected:
 	{
 		static ubyte[0x10000] inBuffer;
 		int received = conn.receive(inBuffer);
+		debug (VERBOSE) writefln("\t\t%s: %d bytes received", cast(void*)this, received);
 
 		if (received == 0)
 		{
