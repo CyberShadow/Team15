@@ -114,6 +114,8 @@ public:
 
 	Data opCat(void[] data)
 	{
+		if (data.length==0)
+			return this;
 		Data result = new Data(length + data.length);
 		result.contents[0..this.length] = contents;
 		result.contents[this.length..$] = data;
@@ -122,7 +124,10 @@ public:
 
 	Data opCat(Data data)
 	{
-		return this.opCat(data.contents);
+		if (data)
+			return this.opCat(data.contents);
+		else
+			return this;
 	}
 
 	Data opCat_r(void[] data)
@@ -171,7 +176,10 @@ public:
 
 	Data opCatAssign(Data data)
 	{
-		return this.opCatAssign(data.contents);
+		if (data)
+			return this.opCatAssign(data.contents);
+		else
+			return this;
 	}
 
 	Data opCatAssign(ubyte value) // hack?
@@ -223,6 +231,15 @@ public:
 		assert(x <= y);
 		assert(y <= length);
 		return new Data(wrapper, start + x, start + y);
+	}
+
+	/// Return a new Data for the first size bytes, and slice this instance from size to end.
+	Data popFront(size_t size)
+	{
+		assert(size <= length);
+		Data result = new Data(wrapper, start, start + size);
+		this.start += size;
+		return result;
 	}
 
 	void[] contents()

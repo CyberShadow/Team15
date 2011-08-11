@@ -107,17 +107,25 @@ private:
 			if ("Content-Length" in currentRequest.headers)
 				expect = toUint(currentRequest.headers["Content-Length"]);
 
-			inBuffer = inBuffer[headersend+4..inBuffer.length];
+			inBuffer.popFront(headersend+4);
 
 			if (expect > 0)
 			{
 				if (expect > inBuffer.length)
 					conn.handleReadData = &onContinuation;
 				else
-					processRequest(inBuffer[0 .. expect]);
+					processRequest(inBuffer.popFront(expect));
 			}
 			else
 				processRequest(null);
+		}
+
+		void onContinuation(ClientSocket sender, void[] data)
+		{
+			inBuffer ~= data;
+
+			if (inBuffer.length >= expect)
+				processRequest(inBuffer.popFront(expect));
 		}
 
 		void processRequest(Data data)
@@ -128,15 +136,8 @@ private:
 
 			// reset for next request
 			conn.handleReadData = &onNewRequest;
-			inBuffer = new Data;
-		}
-
-		void onContinuation(ClientSocket sender, void[] data)
-		{
-			inBuffer ~= cast(string)data;
-
-			if (inBuffer.length >= expect)
-				processRequest(inBuffer[0 .. expect]);
+			if (inBuffer.length) // a second request has been pipelined
+				onNewRequest(conn, null);
 		}
 
 		void sendResponse(HttpResponse response)
