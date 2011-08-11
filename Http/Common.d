@@ -126,6 +126,28 @@ public:
 		return 80;
 	}
 
+	string[string] decodePostData()
+	{
+		auto data = cast(string)data.contents;
+		if (data.length is 0)
+			return null;
+
+		string contentType;
+		foreach (header, value; headers)
+			if (icmp(header, "Content-Type")==0)
+				contentType = value;
+		if (contentType is null)
+			throw new Exception("Can't get content type header");
+
+		switch (contentType)
+		{
+			case "application/x-www-form-urlencoded":
+				return decodeUrlParameters(data);
+			default:
+				throw new Exception("Unknown Content-Type: " ~ *contentType);
+		}
+	}
+
 private:
 	string resource_;
 }
