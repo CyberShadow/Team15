@@ -663,7 +663,7 @@ d_time getMTime(string name)
 		auto h = CreateFileW(std.utf.toUTF16z(name), GENERIC_READ, 0, null, OPEN_EXISTING, 0, HANDLE.init);
 		enforce(h!=INVALID_HANDLE_VALUE, "CreateFile");
 		FILETIME ft;
-		enforce(GetFileTime(h, null, null, &ft)!=0, "GetFileTime");
+		enforce(GetFileTime(h, null, null, &ft), "GetFileTime");
 		CloseHandle(h);
 		return FILETIME2d_time(&ft);
 	}
@@ -918,16 +918,18 @@ void breakPoint()
 	asm { int 3; }
 }
 
-void enforce(bool condition, /*lazy*/ string message = "Precondition failed")
+T enforce(T)(T condition, /*lazy*/ string message = "Precondition failed")
 {
 	if (!condition)
 		throw new Exception(message);
+	return condition;
 }
 
-void lazyEnforce(bool condition, lazy string message = "Precondition failed")
+T lazyEnforce(T)(T condition, lazy string message = "Precondition failed")
 {
 	if (!condition)
 		throw new Exception(message);
+	return condition;
 }
 
 // ************************************************************************
