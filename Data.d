@@ -29,7 +29,7 @@ static import std.gc;
 import std.outofmemory;
 debug import std.stdio;
 debug import std.string;
-debug import Team15.Utils;
+import Team15.Utils;
 
 /** Wrapper for data located in external memory, to prevent faux references.
 	Represents a slice of data managed by a DataWrapper class.
