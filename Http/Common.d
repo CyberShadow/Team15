@@ -457,6 +457,28 @@ string[string] decodeUrlParameters(string qs)
 	return dic;
 }
 
+struct MultipartPart
+{
+	string[string] headers;
+	Data data;
+}
+
+Data encodeMultipart(MultipartPart[] parts, string boundary)
+{
+	auto data = new Data;
+	foreach (ref part; parts)
+	{
+		data ~= "--" ~ boundary ~ "\r\n";
+		foreach (name, value; part.headers)
+			data ~= name ~ ": " ~ value ~ "\r\n";
+		data ~= "\r\n";
+		assert(find(cast(string)part.data.contents, boundary) < 0);
+		data ~= part.data;
+	}
+	data ~= "\r\n--" ~ boundary ~ "--\r\n";
+	return data;
+}
+
 static import std.date;
 import std.date : d_time;
 
