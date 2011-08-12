@@ -306,6 +306,65 @@ Data readData(string filename)
 
 // ************************************************************************
 
+/// From D2's std.stdio.
+
+import std.c.stdio;
+
+version (DigitalMars) version(Windows) version = DIGITAL_MARS_STDIO;
+version (DIGITAL_MARS_STDIO)
+{
+	extern (C)
+	{
+		/* **
+		 * Digital Mars under-the-hood C I/O functions.
+		 * Use _iobuf* for the unshared version of FILE*,
+		 * usable when the FILE is locked.
+		 */
+		int setmode(int, int);
+	}
+
+	alias setmode _setmode;
+	enum { _O_BINARY = 0x8000 }
+	int _fileno(FILE* f) { return f._file; }
+	alias _fileno fileno;
+}
+
+T[] rawRead(T)(FILE* f, T[] buffer)
+{
+	enforce(buffer.length, "rawRead must take a non-empty buffer");
+	version(Windows)
+	{
+		auto fd = _fileno(f);
+		auto mode = _setmode(fd, _O_BINARY);
+		scope(exit) ._setmode(fd, mode);
+		version(DIGITAL_MARS_STDIO)
+		{
+			// @@@BUG@@@ 4243
+			auto info = __fhnd_info[fd];
+			__fhnd_info[fd] &= ~FHND_TEXT;
+			scope(exit) __fhnd_info[fd] = info;
+		}
+	}
+	auto result = fread(buffer.ptr, T.sizeof, buffer.length, f);
+	//errnoEnforce(!error);
+	enforce(ferror(f)==0);
+	return result ? buffer[0 .. result] : null;
+}
+
+//alias rawRead!(ubyte) rawReadBytes;
+
+Data readFILEData(FILE* f)
+{
+	Data buf = new Data(1024*1024);
+	Data result = new Data;
+	while (!feof(f))
+		result ~= rawRead(f, cast(ubyte[])buf.contents);
+	buf.deleteContents();
+	return result;
+}
+
+// ************************************************************************
+
 static size_t dataMemory, dataMemoryPeak;
 static uint   dataCount, allocCount;
 
