@@ -937,13 +937,13 @@ T lazyEnforce(T)(T condition, lazy string message = "Precondition failed")
 /// Much faster version of std.file.listdir, which does not waste time on expensive date conversion
 version(Windows)
 {
-	string[] fastlistdir(string pathname)
+	string[] fastlistdir(string pathname, string glob = null)
 	{
 		string[] result;
 		string c;
 		HANDLE h;
 
-		c = std.path.join(pathname, "*.*");
+		c = std.path.join(pathname, glob ? glob : "*.*");
 		WIN32_FIND_DATAW fileinfo;
 
 		h = FindFirstFileW(std.utf.toUTF16z(c), &fileinfo);
@@ -976,7 +976,7 @@ version (linux)
 	private import std.c.stdlib : getErrno;
 	private import std.c.linux.linux : DIR, dirent, opendir, readdir, closedir;
 
-	string[] fastlistdir(string pathname)
+	string[] fastlistdir(string pathname, string glob = null)
 	{
 		string[] result;
 		DIR* h;
@@ -995,6 +995,10 @@ version (linux)
 							continue;
 
 					size_t len = std.c.string.strlen(fdata.d_name.ptr);
+
+					if (glob && !std.path.fnmatch(fdata.d_name[0 .. len], glob))
+						continue;
+
 					result ~= fdata.d_name[0 .. len].dup;
 				}
 			}
