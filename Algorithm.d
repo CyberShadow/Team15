@@ -127,7 +127,7 @@ struct HashTable(K, V, uint SIZE, alias ALLOCATOR, string HASHFUNC="k")
 
 	ALLOCATOR!(Item) allocator;
 
-	V* get(K k)
+	V* get(ref K k)
 	{
 		auto h = mixin(HASHFUNC) % SIZE;
 		auto item = items[h];
@@ -140,7 +140,7 @@ struct HashTable(K, V, uint SIZE, alias ALLOCATOR, string HASHFUNC="k")
 		return null;
 	}
 
-	V* add(K k)
+	V* add(ref K k)
 	{
 		auto h = mixin(HASHFUNC) % SIZE;
 		auto newItem = allocator.allocate();
@@ -150,7 +150,7 @@ struct HashTable(K, V, uint SIZE, alias ALLOCATOR, string HASHFUNC="k")
 		return &newItem.v;
 	}
 
-	V* getOrAdd(K k)
+	V* getOrAdd(ref K k)
 	{
 		auto h = mixin(HASHFUNC) % SIZE;
 		auto item = items[h];
