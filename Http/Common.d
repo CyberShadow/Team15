@@ -25,11 +25,13 @@
 
 module Team15.Http.Common;
 
-import std.string, std.conv, std.ctype;
+import std.string, std.conv, std.ctype, std.date;
 static import zlib = Team15.Zlib;
 static import gzip = Team15.Gzip;
 public import Team15.Utils;
 import Team15.Data;
+
+alias std.string.toString toString;
 
 /// Base HTTP message class
 private abstract class HttpMessage
