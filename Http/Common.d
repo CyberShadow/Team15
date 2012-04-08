@@ -147,7 +147,7 @@ public:
 			case "application/x-www-form-urlencoded":
 				return decodeUrlParameters(data);
 			default:
-				throw new Exception("Unknown Content-Type: " ~ *contentType);
+				throw new Exception("Unknown Content-Type: " ~ contentType);
 		}
 	}
 
