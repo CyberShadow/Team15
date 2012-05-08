@@ -941,7 +941,11 @@ private:
 		if (handleReadLine)
 			foreach (string line; lines[0 .. lines.length - 1])
 				if (line.length > 0)
+				{
 					handleReadLine(this, line);
+					if (!connected || disconnecting)
+						break;
+				}
 
 		if (lines.length > 0)
 			markNonIdle();
