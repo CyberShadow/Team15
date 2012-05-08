@@ -544,8 +544,7 @@ protected:
 
 	final void onTask_Idle(Timer timer, TimerTask task)
 	{
-		if(!connected)
-			return;
+		assert(connected, "Idle task fired while disconnected");
 
 		if(disconnecting)
 		{
