@@ -531,7 +531,7 @@ string UTF8ToRaw(string r)
 	foreach (dchar c; r)
 	{
 		assert(c < '\u0100');
-		s ~= c;
+		s ~= cast(char)c;
 	}
 	return s;
 }
@@ -542,7 +542,8 @@ unittest
 	for (int i=0; i<256; i++)
 	{
 		c[0] = cast(char)i;
-		assert(UTF8ToRaw(rawToUTF8(c[])) == c[]);
+		assert(UTF8ToRaw(rawToUTF8(c[])) == c[],
+			format([cast(ubyte[])c[], cast(ubyte[])rawToUTF8(c[]), cast(ubyte[])UTF8ToRaw(rawToUTF8(c[]))]));
 	}
 }
 
