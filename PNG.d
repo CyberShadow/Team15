@@ -209,7 +209,7 @@ class PNG
 		{
 			uint i = pos;
 			pos += 12 + chunk.data.length;
-			*cast(uint*)&data[i] = reverse(chunk.data.length);
+			*cast(uint*)&data[i] = reverse(cast(uint)chunk.data.length);
 			(cast(string)data[i+4 .. i+8])[] = chunk.type;
 			data[i+8 .. i+8+chunk.data.length] = cast(ubyte[])chunk.data.contents;
 			*cast(uint*)&data[i+8+chunk.data.length] = reverse(chunk.crc32());

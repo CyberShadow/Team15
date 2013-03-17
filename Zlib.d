@@ -116,7 +116,7 @@ body
 {
 	int err;
 	Data destbuf;
-	uint destlen;
+	size_t destlen;
 
 	destlen = srcbuf.length + ((srcbuf.length + 1023) / 1024) + 12;
 	destbuf = new Data(destlen);
