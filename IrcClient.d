@@ -43,8 +43,6 @@ class IrcClient
 private:
 	/// The socket this class wraps.
 	IrcSocket conn;
-	/// Whether the socket is connected
-	bool connected;
 	/// The password used when logging in.
 	string password;
 
@@ -92,7 +90,6 @@ private:
 		if (log) log(format("* Disconnected (%s)", reason));
 		nickname = realname = null;
 		password = null;
-		connected = false;
 		if (handleDisconnect)
 			handleDisconnect(this, reason, type);
 		channels = null;
@@ -161,7 +158,7 @@ private:
 		{
 		case "001":     // login successful
 			// VP 2006.12.13: changing 376 to 001, since 376 doesn't appear on all servers and it's safe to send commands after 001 anyway
-			connected = true;
+			//connected = true;
 			onEnter(nickname, username, hostname, realname); // add ourselves
 
 			if (handleConnect)
@@ -582,6 +579,12 @@ public:
 	~this()
 	{
 		debug (REFCOUNT) refcount("Irc/IrcClient",0);
+	}
+
+	/// Whether the socket is connected
+	bool connected()
+	{
+		return conn.connected;
 	}
 
 	/// Start establishing a connection to the IRC network.
